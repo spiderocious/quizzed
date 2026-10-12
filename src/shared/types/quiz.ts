@@ -29,6 +29,9 @@ export const QUIZ_ACTION = {
   ANSWER: 'quiz.answer',
   NEXT: 'host.next',
   END_GAME: 'host.end_game',
+  /** A one-player game only: stop and restart the clock. */
+  PAUSE: 'host.pause',
+  RESUME: 'host.resume',
 } as const;
 
 export interface QuizConfig {
@@ -79,6 +82,10 @@ export interface QuizYou {
   score: number;
   rank: number;
   streak: number;
+  /** The right answer, present only when this player paid to see it for the question in play. */
+  hint_idx: number | null;
+  /** True when this question was answered with a reveal: it earned base points only. */
+  hinted: boolean;
 }
 
 export interface QuizAward {
@@ -129,6 +136,11 @@ export interface QuizView {
   phase_started_at: number;
   /** Absolute epoch ms. 0 means the phase waits for the host. */
   deadline: number;
+  /** A one-player game can be paused: the clock is frozen at paused_left_ms. */
+  paused: boolean;
+  paused_left_ms: number;
+  /** What revealing this question's answer costs, in gems. 0 where reveals are not offered. */
+  reveal_cost: number;
   question: QuizQuestion | null;
   answered_ids: string[];
   active_count: number;

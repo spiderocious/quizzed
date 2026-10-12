@@ -7,8 +7,9 @@ import { PATHS } from '@shared/constants/routes';
 import { CLIENT_MESSAGE, ROLE, ROOM_PHASE, type RoomPlayer, type RoomState } from '@shared/realtime/protocol';
 import { CONNECTION, useRoomSocket } from '@shared/realtime/room-socket-context';
 import { RoomSocketProvider } from '@shared/realtime/room-socket-provider';
+import { platform } from '@shared/services/platform';
 import { sessionStore } from '@shared/services/session-store';
-import { ANSWER_RESULT, QUIZ_PHASE, type QuizView } from '@shared/types/quiz';
+import { ANSWER_RESULT, QUIZ_ACTION, QUIZ_PHASE, type QuizView } from '@shared/types/quiz';
 import { Button, BUTTON_VARIANT } from '@shared/ui/Button';
 import { ConnectionBadge } from '@shared/ui/ConnectionBadge';
 import { LoadingScreen } from '@shared/ui/LoadingScreen';
@@ -22,6 +23,7 @@ import { leaveWarning } from '../helpers/leave-warning';
 import { ArenaFinish } from './parts/ArenaFinish';
 import { ArenaHeader } from './parts/ArenaHeader';
 import { ArenaWaiting, type StartControl } from './parts/ArenaWaiting';
+import { RevealAssist } from './parts/RevealAssist';
 
 type Tone = (typeof BACKDROP)[keyof typeof BACKDROP];
 
@@ -42,9 +44,10 @@ interface BodyProps {
   state: RoomState;
   me: RoomPlayer;
   start: StartControl;
+  code: string;
 }
 
-function Body({ mode, state, me, start }: BodyProps) {
+function Body({ mode, state, me, start, code }: BodyProps) {
   const { room, game } = state;
 
   if (room.phase === ROOM_PHASE.LOBBY || game === null) {
@@ -60,7 +63,9 @@ function Body({ mode, state, me, start }: BodyProps) {
       return <PlayerIntro game={game} />;
     case QUIZ_PHASE.QUESTION:
       // Keyed by question so the "I tapped this" state cannot leak into the next one.
-      return game.question === null ? null : <PlayerQuestion key={game.question_seq} game={game} question={game.question} />;
+      return game.question === null ? null : (
+        <PlayerQuestion key={game.question_seq} game={game} question={game.question} assist={<RevealAssist code={code} game={game} />} />
+      );
     case QUIZ_PHASE.REVEAL:
     case QUIZ_PHASE.LEADERBOARD:
     case QUIZ_PHASE.ROUND_END:
@@ -100,6 +105,22 @@ function Arena({ mode, code }: ArenaProps) {
     send(CLIENT_MESSAGE.HOST_START);
   }, [mode, waitingInLobby, send]);
 
+  // A solo run stops its clock while the platform has the game paused: in the
+  // background, or under the pay sheet. A duel cannot — one player may not
+  // freeze a clock that others are racing.
+  useEffect(() => {
+    if (mode !== ARENA_MODE.SOLO) return undefined;
+    const pause = (): void => send(QUIZ_ACTION.PAUSE);
+    const resume = (): void => send(QUIZ_ACTION.RESUME);
+    const onVisibility = (): void => (document.hidden ? pause() : resume());
+    const stop = [platform.onPause(pause), platform.onResume(resume)];
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      stop.forEach((unsubscribe) => unsubscribe());
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [mode, send]);
+
   const navigate = useNavigate();
   const [leaving, setLeaving] = useState(false);
   const stay = useCallback(() => setLeaving(false), []);
@@ -137,9 +158,15 @@ function Arena({ mode, code }: ArenaProps) {
     <PartyBackdrop tone={toneFor(game)}>
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col">
         <ArenaHeader me={me} game={game} onLeave={() => (atStake ? setLeaving(true) : navigate(PATHS.home))} />
-        <Body mode={mode} state={state} me={me} start={start} />
+        <Body mode={mode} state={state} me={me} start={start} code={code} />
       </div>
       <ConnectionBadge />
+      <Show when={game?.paused === true && !leaving}>
+        <Modal title="Paused" onClose={() => send(QUIZ_ACTION.RESUME)}>
+          <p className="text-[17px] font-bold text-ink-2">The clock is stopped. Nothing is lost.</p>
+          <Button onClick={() => send(QUIZ_ACTION.RESUME)}>Carry on</Button>
+        </Modal>
+      </Show>
       <Show when={leaving && atStake && warning !== null}>
         <Modal title={warning?.title ?? ''} onClose={stay}>
           <p className="text-[17px] font-bold text-ink-2">{warning?.message}</p>

@@ -18,6 +18,7 @@ const SDK_URL = 'https://lagoslife.app/sdk/vatar-games-v1.js';
 const SDK_TIMEOUT_MS = 6000;
 const DEV_ID_KEY = 'ft:dev-player';
 const DEV_SESSION_PREFIX = 'dev:';
+const DEV_PURCHASE_PREFIX = 'dev_';
 
 export const PLATFORM_KIND = { LIVE: 'live', DEV: 'dev' } as const;
 export type PlatformKind = (typeof PLATFORM_KIND)[keyof typeof PLATFORM_KIND];
@@ -42,6 +43,12 @@ export interface PlatformMatch {
   winner: string | null;
 }
 
+/** A paid purchase. It is only a claim until our server has checked it with the platform. */
+export interface PlatformPurchase {
+  purchaseId: string;
+  productId: string;
+}
+
 export interface LeaderboardEntry {
   rank: number;
   name: string;
@@ -61,6 +68,9 @@ interface VatarSDK {
   leaderboard(): Promise<Leaderboard>;
   onPause(fn: () => void): () => void;
   onResume(fn: () => void): () => void;
+  purchase(productId: string): Promise<PlatformPurchase>;
+  purchases(): Promise<PlatformPurchase[]>;
+  onPurchase(fn: (purchase: PlatformPurchase) => void): () => void;
   match: {
     create(options: { stake: number; seats: number }): Promise<PlatformMatch>;
     join(code: string): Promise<PlatformMatch>;
@@ -99,6 +109,9 @@ const MESSAGES: Record<string, string> = {
   limit: 'You have reached today’s limit for matches.',
   signed_out: 'Sign in to Lagos Life to play.',
   busy: 'Finish what is open first, then try again.',
+  payment_failed: 'The payment did not go through. Nothing was charged.',
+  not_for_sale: 'That is not on sale right now.',
+  off: 'Purchases are switched off right now.',
 };
 const FALLBACK_MESSAGE = 'Lagos Life could not do that just now. Please try again.';
 
@@ -209,6 +222,26 @@ export const platform = {
       return sdk === null ? () => undefined : sdk.match.onUpdate(listener);
     },
   },
+
+  /**
+   * Opens the platform's own pay sheet. The price and the name shown there are
+   * the platform's, never ours. Outside the platform (preview mode) there is no
+   * pay sheet, so a stand-in purchase is returned for the dev server to accept.
+   */
+  async purchase(productId: string): Promise<PlatformPurchase> {
+    const who = await platform.identify();
+    if (who.kind === PLATFORM_KIND.DEV || sdk === null) {
+      return { purchaseId: `${DEV_PURCHASE_PREFIX}${productId}_${Math.random().toString(36).slice(2, 10)}`, productId };
+    }
+    return live((vatar) => vatar.purchase(productId));
+  },
+  /** Paid purchases our server has not marked delivered yet: a reload or a crash interrupted them. */
+  async purchases(): Promise<PlatformPurchase[]> {
+    await platform.identify();
+    return sdk === null ? [] : live((vatar) => vatar.purchases());
+  },
+  /** A purchase confirmed while nothing was waiting for it, e.g. after returning from the payment page. */
+  onPurchase: (listener: (purchase: PlatformPurchase) => void): (() => void) => (sdk === null ? () => undefined : sdk.onPurchase(listener)),
 
   /** Called when the game goes to the background or a platform sheet covers it. */
   onPause: (listener: () => void): (() => void) => (sdk === null ? () => undefined : sdk.onPause(listener)),

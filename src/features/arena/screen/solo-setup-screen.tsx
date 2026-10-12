@@ -17,6 +17,7 @@ import { Segmented } from '@shared/ui/Segmented';
 
 import { useGameOptions } from '../api/use-game-options';
 import { useStartSolo } from '../api/use-start-solo';
+import { useWallet } from '../api/use-wallet';
 import { countMatching } from '../helpers/count-matching';
 import { formatMultiplier, multiplierPct } from '../helpers/multiplier';
 import { CategoryPicker } from '../widgets/CategoryPicker';
@@ -38,6 +39,7 @@ export default function SoloSetupScreen() {
   const navigate = useNavigate();
   const options = useGameOptions(GAME_ID.QUIZ);
   const start = useStartSolo();
+  const wallet = useWallet();
   const [difficulty, setDifficulty] = useState<Difficulty>(DIFFICULTY.MIXED);
   const [categories, setCategories] = useState<string[]>([]);
   const [seconds, setSeconds] = useState(15);
@@ -85,10 +87,15 @@ export default function SoloSetupScreen() {
           >
             <ArrowLeft size={20} strokeWidth={3} aria-hidden="true" />
           </Link>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-[30px] leading-none">Solo run</h1>
             <p className="mt-1 text-[14px] font-bold text-ink-3">{SOLO_QUESTIONS} questions. Be right, be quick.</p>
           </div>
+          <Show when={wallet.data !== undefined}>
+            <p aria-label={`${wallet.data?.gems ?? 0} gems`} title="Gems reveal an answer when you are stuck" className="shrink-0 rounded-full border-3 border-ink bg-surface px-3 py-1 font-display text-[16px] font-extrabold shadow-pop-sm">
+              💎 {wallet.data?.gems}
+            </p>
+          </Show>
         </header>
 
         <Card className="flex flex-col gap-4 p-4">

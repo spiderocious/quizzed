@@ -95,15 +95,31 @@ await shot(solo, '21-solo-setup');
 await clickText(solo, 'Play');
 
 let soloTotal = 0;
+let revealedQuestion = false;
 for (let q = 1; q <= 10; q += 1) {
   const asked = await readQuestion(solo);
   check(asked.right >= 0, `Q${q}: the question and its four answers are in the database — ${asked.prompt}`);
   if (q === 1) await shot(solo, '22-solo-question');
+  if (q === 2) {
+    // Paid answer reveal: no gems yet, so the button sells a pack; then the
+    // reveal marks the right tile, and that answer earns base points only.
+    await sees(solo, 'Reveal costs 3');
+    await clickText(solo, 'Reveal costs 3');
+    await sees(solo, 'you have 10');
+    check(true, 'a gem pack bought through the (stand-in) pay sheet lands as 10 gems');
+    await clickText(solo, 'Reveal answer');
+    await sees(solo, 'Answer shown');
+    const marked = await solo.evaluate(() => [...document.querySelectorAll('button[aria-label^="Answer "]')].findIndex((b) => b.innerText.includes('💡')));
+    check(marked === asked.right, 'the reveal marks the right answer, and only after paying');
+    await shot(solo, '22b-solo-revealed');
+    revealedQuestion = true;
+  }
   await answer(solo, asked.right);
   await sees(solo, 'Correct!');
   const points = await solo.evaluate(() => Number((document.body.innerText.match(/\+([\d,]+)/)?.[1] ?? '0').replace(/,/g, '')));
   // 500 base + up to 500 speed, ×1.56, plus up to 500 streak bonus ×1.56.
   if (points < 780 || points > 2340) problems.push(`Q${q}: ${points} points is outside what ×1.56 can produce`);
+  if (q === 2) check(revealedQuestion && points === 780, `a revealed answer earns the base only: ${points} (500 × 1.56 = 780)`);
   soloTotal += points;
   if (q === 1) await shot(solo, '23-solo-correct');
   await solo.waitForFunction(() => !document.body.innerText.includes('Correct!'), { timeout: 10000 });

@@ -31,6 +31,9 @@ export const EP = {
     STATUS: `${V1}/platform/status`,
     SOLO: `${V1}/platform/solo`,
     MATCH_JOIN: (matchId: string) => `${V1}/platform/matches/${encodeURIComponent(matchId)}/join`,
+    WALLET: `${V1}/platform/wallet`,
+    PURCHASE_CLAIM: (purchaseId: string) => `${V1}/platform/purchases/${encodeURIComponent(purchaseId)}/claim`,
+    REVEAL: (code: string) => `${V1}/platform/solo/${encodeURIComponent(code)}/reveal`,
   },
 
   RESULTS: {

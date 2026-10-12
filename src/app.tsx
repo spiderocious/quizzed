@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 
+import { PurchaseRestore } from '@features/arena';
 import { platform } from '@shared/services/platform';
 import { sound } from '@shared/services/sound';
 
@@ -40,6 +41,7 @@ export function App() {
 
   return (
     <AppProvider>
+      <PurchaseRestore />
       <RouterProvider router={router} />
     </AppProvider>
   );

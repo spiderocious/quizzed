@@ -40,7 +40,9 @@ export function PlayerReveal({ game }: PlayerRevealProps) {
           +<CountUp value={you?.points ?? 0} durationMs={700} />
         </p>
         <p className="font-display text-[17px] font-bold">
-          Answered in {((you?.speed_ms ?? 0) / MS_PER_SECOND).toFixed(1)}s — faster is worth more
+          <Show when={you?.hinted !== true} fallback="Answer revealed — base points only">
+            Answered in {((you?.speed_ms ?? 0) / MS_PER_SECOND).toFixed(1)}s — faster is worth more
+          </Show>
         </p>
         <Show when={(you?.streak ?? 0) >= STREAK_WORTH_SHOWING}>
           <p className="inline-flex animate-pop-in items-center gap-2 rounded-full border-3 border-ink bg-accent px-4 py-1.5 font-display text-[20px] font-extrabold text-white shadow-pop-sm">

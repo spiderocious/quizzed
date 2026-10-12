@@ -1,5 +1,5 @@
 import { Repeat, Show } from 'meemaw';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 
 import { useRoomSocket } from '@shared/realtime/room-socket-context';
@@ -14,10 +14,13 @@ import { usePhonePrefs } from '../../providers/phone-prefs-provider';
 interface PlayerQuestionProps {
   game: QuizView;
   question: QuizQuestion;
+  /** Sits between the question and its answers. A one-phone game puts its paid answer reveal here. */
+  assist?: ReactNode;
 }
 
 const BUZZ_MS = 30;
 const URGENT_SECONDS = 5;
+const MS_PER_SECOND = 1000;
 // Past this many characters a prompt drops a size so the answers stay on screen.
 const LONG_PROMPT = 90;
 
@@ -30,10 +33,15 @@ const LONG_PROMPT = 90;
  * the server: on a slow connection a button that does nothing for half a
  * second gets tapped twice. The server keeps only the first answer either way.
  */
-export function PlayerQuestion({ game, question }: PlayerQuestionProps) {
+export function PlayerQuestion({ game, question, assist }: PlayerQuestionProps) {
   const { send } = useRoomSocket();
   const { showQuestion } = usePhonePrefs();
-  const countdown = useCountdown(game.deadline, game.phase_started_at);
+  const ticking = useCountdown(game.deadline, game.phase_started_at);
+  // A paused game's deadline is stale: show the time it stopped with.
+  const countdown = game.paused
+    ? { ...ticking, secondsLeft: Math.ceil(game.paused_left_ms / MS_PER_SECOND), fraction: Math.min(1, game.paused_left_ms / Math.max(1, game.deadline - game.phase_started_at)) }
+    : ticking;
+  const hint = game.you?.hint_idx ?? null;
   const [tapped, setTapped] = useState<number | null>(null);
 
   const chosen = game.you?.choice ?? tapped;
@@ -84,6 +92,8 @@ export function PlayerQuestion({ game, question }: PlayerQuestionProps) {
         </div>
       </Show>
 
+      {assist}
+
       <div key={game.question_seq} className={cn('grid flex-1 gap-3', showQuestion ? 'grid-cols-1' : 'grid-cols-2')}>
         <Repeat each={question.options}>
           {(option, index) => {
@@ -106,12 +116,17 @@ export function PlayerQuestion({ game, question }: PlayerQuestionProps) {
                   style.text,
                   showQuestion ? 'min-h-[60px] justify-start px-4 py-2.5 text-left' : 'min-h-[120px] flex-col',
                   locked && !mine && 'opacity-30 saturate-50',
+                  !locked && hint !== null && hint !== index && 'opacity-40 saturate-50',
+                  !locked && hint === index && 'ring-[5px] ring-white',
                   mine && 'translate-y-[6px] animate-jelly shadow-none ring-[5px] ring-white',
                 )}
               >
                 <Shape className={showQuestion ? 'h-8 w-8 shrink-0' : 'h-16 w-16'} strokeWidth={3} fill="currentColor" aria-hidden="true" />
                 <Show when={showQuestion}>
-                  <span className="min-w-0 break-words font-display text-[20px] font-extrabold leading-tight">{option}</span>
+                  <span className="min-w-0 flex-1 break-words font-display text-[20px] font-extrabold leading-tight">{option}</span>
+                </Show>
+                <Show when={hint === index}>
+                  <span className="shrink-0 rounded-full border-2 border-ink bg-sun px-2 py-0.5 font-display text-[13px] font-extrabold text-ink">💡 Answer</span>
                 </Show>
               </button>
             );
