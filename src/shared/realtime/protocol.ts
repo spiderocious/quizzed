@@ -53,6 +53,10 @@ export interface RoomView {
   players: RoomPlayer[];
   config: QuizConfig;
   facts: RoomFact[];
+  /** Only in a lobby whose players start the game themselves: who holds Start. */
+  starter_id?: string;
+  /** How many players must be seated before Start works. */
+  min_to_start?: number;
 }
 
 export interface RoomState {

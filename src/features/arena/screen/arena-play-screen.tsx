@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Show } from 'meemaw';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { PhonePrefsProvider, PlayerFinal, PlayerIntro, PlayerQuestion, PlayerReveal, usePlayerFeedback } from '@features/player';
 import { PATHS } from '@shared/constants/routes';
@@ -8,16 +9,19 @@ import { CONNECTION, useRoomSocket } from '@shared/realtime/room-socket-context'
 import { RoomSocketProvider } from '@shared/realtime/room-socket-provider';
 import { sessionStore } from '@shared/services/session-store';
 import { ANSWER_RESULT, QUIZ_PHASE, type QuizView } from '@shared/types/quiz';
+import { Button, BUTTON_VARIANT } from '@shared/ui/Button';
 import { ConnectionBadge } from '@shared/ui/ConnectionBadge';
 import { LoadingScreen } from '@shared/ui/LoadingScreen';
 import { MessageScreen } from '@shared/ui/MessageScreen';
+import { Modal } from '@shared/ui/Modal';
 import { BACKDROP, PartyBackdrop } from '@shared/ui/PartyBackdrop';
 
 import { ARENA_MODE, type ArenaMode } from '../arena.types';
+import { leaveWarning } from '../helpers/leave-warning';
 
 import { ArenaFinish } from './parts/ArenaFinish';
 import { ArenaHeader } from './parts/ArenaHeader';
-import { ArenaWaiting } from './parts/ArenaWaiting';
+import { ArenaWaiting, type StartControl } from './parts/ArenaWaiting';
 
 type Tone = (typeof BACKDROP)[keyof typeof BACKDROP];
 
@@ -37,16 +41,17 @@ interface BodyProps {
   mode: ArenaMode;
   state: RoomState;
   me: RoomPlayer;
+  start: StartControl;
 }
 
-function Body({ mode, state, me }: BodyProps) {
+function Body({ mode, state, me, start }: BodyProps) {
   const { room, game } = state;
 
   if (room.phase === ROOM_PHASE.LOBBY || game === null) {
     return mode === ARENA_MODE.SOLO ? (
       <ArenaWaiting title="Ready?" hint="Here it comes…" players={room.players} />
     ) : (
-      <ArenaWaiting title="Match found!" hint="Starting as soon as everyone is in…" players={room.players} />
+      <ArenaWaiting title="Match lobby" hint="Waiting for players…" players={room.players} start={start} />
     );
   }
 
@@ -95,6 +100,10 @@ function Arena({ mode, code }: ArenaProps) {
     send(CLIENT_MESSAGE.HOST_START);
   }, [mode, waitingInLobby, send]);
 
+  const navigate = useNavigate();
+  const [leaving, setLeaving] = useState(false);
+  const stay = useCallback(() => setLeaving(false), []);
+
   const back = (
     <Link to={PATHS.home} className="font-display text-[20px] font-extrabold text-stage underline">
       Back to the start
@@ -110,15 +119,38 @@ function Arena({ mode, code }: ArenaProps) {
   const me = state.room.players.find((player) => player.id === state.you.player_id);
   if (me === undefined) return <LoadingScreen label="Finding your seat…" />;
 
-  const inGame = state.room.phase !== ROOM_PHASE.LOBBY && state.game !== null;
+  const game = state.room.phase === ROOM_PHASE.LOBBY ? null : state.game;
+  // Only a game in progress has anything to lose. Before the first question
+  // and after the last, the way out is just the way out.
+  const atStake = game !== null && game.phase !== QUIZ_PHASE.FINISHED;
+  const warning = game === null ? null : leaveWarning({ mode, board: game.board, myId: me.id, question: game.question_in_round, totalQuestions: game.questions_per_round });
+
+  const starter = state.room.players.find((player) => player.id === state.room.starter_id);
+  const start: StartControl = {
+    mine: starter?.id === me.id,
+    ready: state.room.players.length >= (state.room.min_to_start ?? 1),
+    starterName: starter?.name ?? '',
+    onStart: () => send(CLIENT_MESSAGE.HOST_START),
+  };
 
   return (
-    <PartyBackdrop tone={toneFor(inGame ? state.game : null)}>
+    <PartyBackdrop tone={toneFor(game)}>
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col">
-        <ArenaHeader me={me} game={inGame ? state.game : null} />
-        <Body mode={mode} state={state} me={me} />
+        <ArenaHeader me={me} game={game} onLeave={() => (atStake ? setLeaving(true) : navigate(PATHS.home))} />
+        <Body mode={mode} state={state} me={me} start={start} />
       </div>
       <ConnectionBadge />
+      <Show when={leaving && atStake && warning !== null}>
+        <Modal title={warning?.title ?? ''} onClose={stay}>
+          <p className="text-[17px] font-bold text-ink-2">{warning?.message}</p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={stay}>Keep playing</Button>
+            <Button variant={BUTTON_VARIANT.DANGER} onClick={() => navigate(PATHS.home)}>
+              Leave anyway
+            </Button>
+          </div>
+        </Modal>
+      </Show>
     </PartyBackdrop>
   );
 }

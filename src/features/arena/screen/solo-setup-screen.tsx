@@ -130,7 +130,7 @@ export default function SoloSetupScreen() {
           <CategoryPicker categories={playable} difficulty={difficulty} selected={categories} onChange={setCategories} />
         </Card>
 
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-canvas via-canvas/95 to-transparent pt-8">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-canvas from-70% to-transparent pt-8">
           <div className="safe-bottom pointer-events-auto mx-auto flex w-full max-w-lg flex-col gap-2 px-4 pb-4">
             <Show when={matching === 0}>
               <InlineError message="No questions match those choices. Add a topic or change the difficulty." />

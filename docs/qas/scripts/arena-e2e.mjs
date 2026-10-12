@@ -132,13 +132,31 @@ for (const page of [ada, bem]) {
 }
 await shot(ada, '25-duel-lobby');
 await clickText(ada, 'Join test match');
-await sees(ada, 'Match found');
+await sees(ada, 'Match lobby');
+await sees(ada, 'Start unlocks when another player joins');
+check(await ada.evaluate(() => [...document.querySelectorAll('button')].some((b) => b.innerText.includes('Start match') && b.disabled)), 'alone in the lobby, the first player sees Start but cannot press it');
 await shot(ada, '26-duel-waiting');
 await clickText(bem, 'Join test match');
+await sees(bem, 'Waiting for');
+check(!(await bem.evaluate(() => document.body.innerText)).includes('Start match'), 'the second player has no Start button and is told who starts');
+await pause(2500);
+check((await ada.evaluate(() => document.body.innerText)).includes('Match lobby'), 'nothing starts on its own once both are in');
+await shot(bem, '26b-duel-waiting-for-starter');
+await clickText(ada, 'Start match');
 
 for (let q = 1; q <= 7; q += 1) {
   const [a, b] = await Promise.all([readQuestion(ada), readQuestion(bem)]);
   check(a.prompt === b.prompt && a.right === b.right && a.right >= 0, `Q${q}: both phones got the same question — ${a.prompt}`);
+  if (q === 2) {
+    // Leaving mid-match asks first, in the player's own numbers.
+    await bem.click('button[aria-label="Leave the game"]');
+    await sees(bem, 'Leave the match?');
+    const warning = await bem.evaluate(() => document.querySelector('[role="dialog"]').innerText);
+    check(/lose this match to/.test(warning) && /pts/.test(warning), `leaving mid-match warns who wins and the scores — ${warning.split('\n')[1]}`);
+    await shot(bem, '26c-leave-warning');
+    await clickText(bem, 'Keep playing');
+    check(!(await bem.evaluate(() => document.querySelector('[role="dialog"]'))), 'Keep playing closes the warning and stays in the match');
+  }
   await answer(ada, a.right);
   await answer(bem, (b.right + 1) % 4);
   await sees(ada, 'Correct!');

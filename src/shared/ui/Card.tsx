@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
 import { cn } from '@shared/utils/cn';
 
@@ -8,9 +8,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   big?: boolean;
 }
 
-export function Card({ children, big = false, className, ...rest }: CardProps) {
+export const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ children, big = false, className, ...rest }, ref) {
   return (
     <div
+      ref={ref}
       className={cn(
         'border-3 border-ink bg-surface',
         big ? 'rounded-stage shadow-pop-lg' : 'rounded-card shadow-pop',
@@ -21,4 +22,4 @@ export function Card({ children, big = false, className, ...rest }: CardProps) {
       {children}
     </div>
   );
-}
+});

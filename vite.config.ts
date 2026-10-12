@@ -3,9 +3,11 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-// index.html builds its link-preview tags from VITE_SITE_URL. Netlify already
-// knows the site's address and exposes it as URL, so a deploy needs no setup.
-process.env.VITE_SITE_URL ||= process.env.URL || 'http://localhost:5174';
+// Where Quizzed lives. index.html builds its canonical link and link-preview
+// tags from this, and crawlers need the full address, so it is the public one
+// even in a local build. Set VITE_SITE_URL to override it (no trailing slash).
+const SITE_URL = 'https://quizzed.devferanmi.xyz';
+process.env.VITE_SITE_URL ||= SITE_URL;
 
 export default defineConfig({
   plugins: [react()],
