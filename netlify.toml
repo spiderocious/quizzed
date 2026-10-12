@@ -1,0 +1,22 @@
+[[redirects]]
+  from = "/static/*"
+  to = "/static/:splat"
+  status = 200
+  force = true
+
+# Every path serves the app, so a refresh on /solo or /join/ABCDE is not a 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[[headers]]
+  for = "/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+    # Lagos Life shows the quiz inside a frame on its own pages. This header
+    # names the only sites allowed to do that; without it the browser refuses.
+    # The list is the one in https://lagoslife.app/developers/docs. Do not add
+    # X-Frame-Options: it would block the frame outright.
+    Content-Security-Policy = "frame-ancestors 'self' https://lagoslife.app https://www.lagoslife.app https://naijalife.app https://www.naijalife.app https://lagoslife.eliysites.com"

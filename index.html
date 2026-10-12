@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Quizzed — the fast quiz showdown</title>
+    <meta name="description" content="Be right. Be quick. Quizzed is a fast quiz game: beat the clock on a solo run or take on friends head-to-head across 26 topics." />
+    <meta name="application-name" content="Quizzed" />
+    <meta name="theme-color" content="#2D5BFF" />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Quizzed" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Link previews. Crawlers need absolute addresses, so these are built
+         from VITE_SITE_URL: set it to the deployed address, no trailing slash. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Quizzed" />
+    <meta property="og:title" content="Quizzed — the fast quiz showdown" />
+    <meta property="og:description" content="Be right. Be quick. Beat the clock on a solo run or take on friends head-to-head across 26 topics." />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Quizzed: be right, be quick, beat your friends." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Quizzed — the fast quiz showdown" />
+    <meta name="twitter:description" content="Be right. Be quick. Beat the clock on a solo run or take on friends head-to-head across 26 topics." />
+    <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Quizzed",
+        "url": "%VITE_SITE_URL%/",
+        "image": "%VITE_SITE_URL%/logo-1024.png",
+        "description": "A fast quiz game: beat the clock on a solo run or take on friends head-to-head across 26 topics.",
+        "genre": ["Trivia", "Quiz"],
+        "gamePlatform": "Web browser",
+        "applicationCategory": "Game",
+        "playMode": ["SinglePlayer", "MultiPlayer"],
+        "author": { "@type": "Organization", "name": "Gbedity Game Studios" }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Quizzed needs JavaScript switched on to play.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

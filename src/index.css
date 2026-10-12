@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   FAMILY TIME — living-room party foundation.
+   The single source of truth for tokens. Tailwind reads these.
+
+   Lineage: Gbedity's bright-room game-night palette, kept almost
+   whole. What changed to make it more playful:
+     - ink is a deeper forest, so it can carry a 3px outline
+     - every object gets a hard drop-edge it presses into
+     - two party colours join the set: bubble pink and sky
+     - four answer colours, each locked to a shape
+   ============================================================ */
+:root {
+  /* Stage architecture */
+  --stage: #2d5bff;
+  --stage-deep: #1e3fb8;
+  --stage-tint: #d8e1ff;
+  --canvas: #c8e8da;
+  --canvas-tint: #e4f5ec;
+  --canvas-deep: #abdbc6;
+  --surface: #ffffff;
+  --surface-soft: #f7fbf9;
+
+  /* Ink — forest, never black */
+  --ink: #163b2e;
+  --ink-2: #2f5c46;
+  --ink-3: #536a62;
+  --ink-4: #8ea69d;
+  --ink-5: #c7d6cf;
+  --ink-inv: #ffffff;
+
+  /* Action & accent */
+  --action: #27b973;
+  --action-deep: #1f9a60;
+  --action-soft: #dff5ea;
+  --accent: #ff8a2a;
+  --accent-deep: #e8731a;
+  --accent-soft: #ffe5cd;
+
+  /* Semantic + party */
+  --danger: #e85a4f;
+  --danger-deep: #c44035;
+  --danger-soft: #fbe0dd;
+  --sun: #f7c948;
+  --sun-deep: #d9a813;
+  --sun-soft: #fef3d1;
+  --berry: #7b4fbf;
+  --berry-soft: #ece2f8;
+  --bubble: #ff6fb5;
+  --bubble-soft: #ffe0ef;
+  --sky: #5bc0eb;
+  --sky-soft: #e0f2fb;
+
+  /* Answers — A tomato, B sky, C sun, D green. B is deliberately NOT the stage
+     cobalt: a cobalt tile on the cobalt room has no edge to read. */
+  --answer-a: #e85a4f;
+  --answer-b: #4cc9f0;
+  --answer-c: #f7c948;
+  --answer-d: #27b973;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  /* Baloo for anything that shouts; Nunito for everything that works. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-extrabold leading-[0.95] tracking-tight;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--stage);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /* Keep clear of a notch or a home bar; adds to whatever padding is already set. */
+  .safe-top {
+    margin-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* The confetti dot pattern behind party screens. */
+  .dots-light {
+    background-image: radial-gradient(rgb(255 255 255 / 0.16) 2px, transparent 2.5px);
+    background-size: 28px 28px;
+  }
+
+  .dots-ink {
+    background-image: radial-gradient(rgb(22 59 46 / 0.08) 2px, transparent 2.5px);
+    background-size: 26px 26px;
+  }
+
+  .ink-stroke {
+    -webkit-text-stroke: 2px var(--ink);
+    paint-order: stroke fill;
+  }
+
+  /* Stagger helper: set --i on a child and it waits its turn. */
+  .stagger {
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+}
+
+/* People who ask for less motion get the same game without the bouncing. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

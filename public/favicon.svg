@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Quizzed">
+  <defs>
+    <pattern id="dots" width="44" height="44" patternUnits="userSpaceOnUse">
+      <circle cx="22" cy="22" r="4" fill="#ffffff" fill-opacity="0.16"/>
+    </pattern>
+    <clipPath id="frame"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="512" height="512" fill="#2d5bff"/>
+    <rect width="512" height="512" fill="url(#dots)"/>
+    <g transform="translate(256 256) scale(1) rotate(-6) translate(-256 -256)">
+      <rect x="101" y="117" width="310" height="310" rx="78" fill="#163b2e"/>
+      <rect x="101" y="91" width="310" height="310" rx="78" fill="#f7c948" stroke="#163b2e" stroke-width="20"/>
+      <circle cx="252" cy="240" r="76" fill="none" stroke="#163b2e" stroke-width="46"/>
+      <line x1="308" y1="298" x2="338" y2="330" stroke="#163b2e" stroke-width="46" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
